@@ -181,7 +181,7 @@ class neural_network():
 
 
 
-learning_speed = -0.000000000000001
+learning_speed = -0.00000000001
 neurons_per_layer = [15, 15, 10]
 network = neural_network(784, neurons_per_layer)
 network.layers[1].activation_function = "ReLU"
@@ -190,7 +190,7 @@ images = get_images("training_data/train-images-idx3-ubyte.gz")
 labels = get_labels("training_data/train-labels-idx1-ubyte.gz")
 
 count = 0
-for i in range(60000):
+while True:
   for j in range(100):
     count += 1
     current_image = images[count]
@@ -204,9 +204,16 @@ for i in range(60000):
     network.forward(image_pixels)
     network.backward(current_label)
     pick = network.layers[-1].output.index(max(network.layers[-1].output))
+
+    cost = 0
     output = []
-    for k in network.layers[-1].output:
-      output.append(round(k, 3))
-    print(current_label, pick, count, output)
+    for k in range(len(network.layers[-1].output)):
+      output.append(round(network.layers[-1].output[k], 3))
+      if k == current_label:
+        cost += network.layers[-1].output[k] - 1
+      else:
+        cost += network.layers[-1].output[k]
+
+    print(current_label, pick, count, output, "cost =", cost**2)
 
   network.adjust_wb(learning_speed)
