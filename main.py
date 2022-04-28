@@ -137,9 +137,13 @@ class neural_network():
         if layer == self.layers[-1]:
           #if we're looking at the target neuron, the target is 1, otherwise its 0.1
           if neuron.index == target:
-            derivative_error = 2 * (neuron.activation - 1)
+            if neuron.activation < 0.0001:
+              neuron.activation = 0.0001
+            derivative_error = -2 * math.log(neuron.activation)
           else:
-            derivative_error = 2 * (neuron.activation - 0)
+            if neuron.activation > 0.9999:
+              neuron.activation = 0.9999
+            derivative_error = -2 * math.log(1 - neuron.activation)
         else:
           #if we aren't dealing with the last layer, we reuse calculations from the previous layer as the error
           derivative_error = mean(neuron.value_derivatives)
@@ -209,10 +213,15 @@ while True:
     output = []
     for k in range(len(network.layers[-1].output)):
       output.append(round(network.layers[-1].output[k], 3))
+      value = network.layers[-1].output[k]
+      if value > 0.9999:
+        value = 0.9999
+      elif value < 0.0001:
+        value = 0.0001
       if k == current_label:
-        cost += network.layers[-1].output[k] - 1
+        cost += -1 * math.log(value)
       else:
-        cost += network.layers[-1].output[k]
+        cost += -1 * math.log(1 - value)
 
     print(current_label, pick, count, output, "cost =", cost**2)
 
