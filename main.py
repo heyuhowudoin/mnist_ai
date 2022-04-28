@@ -185,7 +185,7 @@ class neural_network():
 
 
 
-learning_speed = -0.00000000001
+learning_speed = 0.000000001
 neurons_per_layer = [15, 15, 10]
 network = neural_network(784, neurons_per_layer)
 network.layers[1].activation_function = "ReLU"
