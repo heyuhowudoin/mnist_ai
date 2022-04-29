@@ -68,6 +68,8 @@ def ReLU_prime(x):
 def softmax(x, total_x):
   return x / total_x
 
+def softmax_prime(x, total_x):
+  return (total_x - x) / total_x**2
 
 class neuron():
   def __init__(self, index, num_of_inputs, activation = 0):
