@@ -65,12 +65,16 @@ def ReLU_prime(x):
   else:
     return 1
 
+def softmax(x, total_x):
+  return x / total_x
+
 
 class neuron():
   def __init__(self, index, num_of_inputs, activation = 0):
     self.index = index
     self.activation = activation
     self.num_of_inputs = num_of_inputs
+    self.total_value = 0
     self.weights = []
     self.weights_adjust = []
     self.biases_adjust = []
@@ -81,7 +85,7 @@ class neuron():
       self.weights.append(random.uniform(-2, 2))
       self.weights_adjust.append([])
 
-  def forward(self, activation_function, inputs):
+  def forward(self, activation_function, inputs, total_output = 0):
     self.total_value = 0
     for act, wgt in zip(inputs, self.weights):
       self.total_value += (act * wgt)
@@ -92,6 +96,8 @@ class neuron():
       self.activation = sigmoid(self.total_value)
     elif activation_function == "ReLU":
       self.activation = ReLU(self.total_value)
+    elif activation_function == "softmax":
+      self.activation = softmax(self.total_value, total_output)
 
 
 class layer():
@@ -105,11 +111,20 @@ class layer():
     for i in range(num_of_neurons):
       self.neurons.append(neuron(i, num_of_inputs))
 
-  def forward(self, inputs):
-    self.output = []
-    for neuron in self.neurons:
-      neuron.forward(self.activation_function, inputs)
-      self.output.append(neuron.activation)
+  def forward(self, inputs, use_softmax = False):
+    if use_softmax == False:
+      self.output = []
+      for neuron in self.neurons:
+        neuron.forward(self.activation_function, inputs)
+        self.output.append(neuron.activation)
+    else:
+      self.output = []
+      total_layer_value = 0
+      for neuron in self.neurons:
+        total_layer_value += neuron.total_value
+      for neuron in self.neurons:
+        neuron.forward(self.activation_function, inputs, total_layer_value)
+        self.output.append(neuron.activation)
 
 
 class neural_network():
@@ -125,7 +140,7 @@ class neural_network():
 
   def forward(self, inputs):
     self.inputs = inputs
-    self.layers[0].forward(inputs)
+    self.layers[0].forward(inputs, True)
 
     for i in range(len(self.layers) - 1):
       self.layers[i + 1].forward(self.layers[i].output)
@@ -186,9 +201,10 @@ class neural_network():
 
 
 learning_speed = 0.00000000000000001
-neurons_per_layer = [30, 30, 10]
+neurons_per_layer = [30, 20, 20, 10]
 network = neural_network(784, neurons_per_layer)
 network.layers[1].activation_function = "ReLU"
+network.layers[-1].activation_function = "softmax"
 
 images = get_images("training_data/train-images-idx3-ubyte.gz")
 labels = get_labels("training_data/train-labels-idx1-ubyte.gz")
