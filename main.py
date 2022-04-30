@@ -45,13 +45,10 @@ def max(list_):
   return max_value
 
 def sigmoid(x):
-    return 1 / (1 + math.e**x)
+  return 1 / (1 + math.e**x)
 
 def sigmoid_prime(x):
-  if sigmoid(x) != 1:
-    return sigmoid(x) / (1 - sigmoid(x))
-  else:
-    return sigmoid(x) / (1.001 - sigmoid(x))
+  return sigmoid(x) / (1 - sigmoid(x))
 
 def ReLU(x):
   if x < 0:
@@ -65,8 +62,16 @@ def ReLU_prime(x):
   else:
     return 1
 
-def softmax(x, total_x):
-  return x / total_x
+def softmax(x, output_list):
+  total_den = 0
+  for i in output_list:
+    total_den += (math.e**i)
+
+  return (math.e**x) / total_den
+
+def softmax_prime(x, output_list):
+  return softmax(x, output_list) * (1 - (softmax(x, output_list)))
+
 
 
 class neuron():
@@ -79,13 +84,13 @@ class neuron():
     self.weights_adjust = []
     self.biases_adjust = []
     self.value_derivatives = []
-    self.bias = random.uniform(-2, 2)
+    self.bias = random.uniform(0, 1)
 
     for i in range(self.num_of_inputs):
-      self.weights.append(random.uniform(-2, 2))
+      self.weights.append(random.uniform(0, 1))
       self.weights_adjust.append([])
 
-  def forward(self, activation_function, inputs, total_output = 0):
+  def forward(self, activation_function, inputs):
     self.total_value = 0
     for act, wgt in zip(inputs, self.weights):
       self.total_value += (act * wgt)
@@ -97,7 +102,10 @@ class neuron():
     elif activation_function == "ReLU":
       self.activation = ReLU(self.total_value)
     elif activation_function == "softmax":
-      self.activation = softmax(self.total_value, total_output)
+      self.activation = self.total_value
+
+  def special_forward(self, total_output):
+    self.activation = softmax(self.total_value, total_output)
 
 
 class layer():
@@ -111,19 +119,20 @@ class layer():
     for i in range(num_of_neurons):
       self.neurons.append(neuron(i, num_of_inputs))
 
-  def forward(self, inputs, use_softmax = False):
-    if use_softmax == False:
+  def forward(self, inputs):
+    if self.activation_function == "softmax":
       self.output = []
+      total_layer_values = []
       for neuron in self.neurons:
         neuron.forward(self.activation_function, inputs)
+        total_layer_values.append(neuron.total_value)
+      for neuron in self.neurons:
+        neuron.special_forward(total_layer_values)
         self.output.append(neuron.activation)
     else:
       self.output = []
-      total_layer_value = 0
       for neuron in self.neurons:
-        total_layer_value += neuron.total_value
-      for neuron in self.neurons:
-        neuron.forward(self.activation_function, inputs, total_layer_value)
+        neuron.forward(self.activation_function, inputs)
         self.output.append(neuron.activation)
 
 
@@ -140,7 +149,7 @@ class neural_network():
 
   def forward(self, inputs):
     self.inputs = inputs
-    self.layers[0].forward(inputs, True)
+    self.layers[0].forward(inputs)
 
     for i in range(len(self.layers) - 1):
       self.layers[i + 1].forward(self.layers[i].output)
@@ -172,11 +181,17 @@ class neural_network():
             previous_neuron_value = self.inputs[weight]
 
           if layer.activation_function == "sigmoid":
-            derivative_sigmoid = sigmoid_prime(neuron.total_value)
+            activation_derivative = sigmoid_prime(neuron.total_value)
           elif layer.activation_function == "ReLU":
-            derivative_sigmoid = ReLU_prime(neuron.total_value)
+            activation_derivative = ReLU_prime(neuron.total_value)
+          elif layer.activation_function == "softmax":
+            total_layer_values = []
+            for neuron_2 in layer.neurons:
+              total_layer_values.append(neuron_2.total_value)
+            activation_derivative = softmax_prime(neuron.total_value, total_layer_values)
+            # print(activation_derivative, derivative_error, previous_neuron_value)
 
-          bias_derivative = derivative_error * derivative_sigmoid
+          bias_derivative = derivative_error * activation_derivative
           weight_derivative = bias_derivative * previous_neuron_value
 
           neuron.weights_adjust[weight].append(weight_derivative)
@@ -187,7 +202,11 @@ class neural_network():
   def adjust_wb(self, learning_speed):
     for layer in self.layers:
       for neuron in layer.neurons:
-        neuron.bias += (mean(neuron.biases_adjust) * learning_speed)
+        try:
+          neuron.bias += (mean(neuron.biases_adjust) * learning_speed)
+        except:
+          print(layer.index)
+          quit()
         for weight in range(len(neuron.weights)):
           neuron.weights[weight] += (mean(neuron.weights_adjust[weight]) * learning_speed)
 
@@ -200,11 +219,12 @@ class neural_network():
 
 
 
-learning_speed = 0.00000000000000001
+learning_speed = 10
 neurons_per_layer = [30, 20, 20, 10]
 network = neural_network(784, neurons_per_layer)
 network.layers[1].activation_function = "ReLU"
-network.layers[-1].activation_function = "softmax"
+network.layers[2].activation_function = "ReLU"
+network.layers[3].activation_function = "softmax"
 
 images = get_images("training_data/train-images-idx3-ubyte.gz")
 labels = get_labels("training_data/train-labels-idx1-ubyte.gz")
@@ -240,5 +260,6 @@ while True:
         cost += -1 * math.log(1 - value)
 
     print(current_label, pick, count, output, "cost =", cost**2)
+    print(network.layers[3].neurons[5].weights_adjust[4][4:8])
+  network.adjust_wb(learning_speed / count)
 
-  network.adjust_wb(learning_speed)
