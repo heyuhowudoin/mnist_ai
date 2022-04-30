@@ -219,7 +219,7 @@ class neural_network():
 
 
 
-learning_speed = 10
+learning_speed = -1000
 neurons_per_layer = [30, 20, 20, 10]
 network = neural_network(784, neurons_per_layer)
 network.layers[1].activation_function = "ReLU"
@@ -260,6 +260,6 @@ while True:
         cost += -1 * math.log(1 - value)
 
     print(current_label, pick, count, output, "cost =", cost**2)
-    print(network.layers[3].neurons[5].weights_adjust[4][4:8])
+    print(network.layers[3].neurons[5].weights_adjust[4][4:8], network.layers[3].neurons[5].weights[4])
   network.adjust_wb(learning_speed / count)
 
