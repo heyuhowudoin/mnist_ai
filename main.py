@@ -220,11 +220,11 @@ class neural_network():
 
 
 learning_speed = -1
-neurons_per_layer = [30, 10]
+neurons_per_layer = [15, 10]
 network = neural_network(784, neurons_per_layer)
 network.layers[1].activation_function = "ReLU"
 # network.layers[2].activation_function = "ReLU"
-network.layers[-1].activation_function = "softmax"dddd
+network.layers[-1].activation_function = "softmax"
 
 images = get_images("training_data/train-images-idx3-ubyte.gz")
 labels = get_labels("training_data/train-labels-idx1-ubyte.gz")
