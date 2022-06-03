@@ -203,12 +203,12 @@ class neural_network():
     for layer in self.layers:
       for neuron in layer.neurons:
         try:
-          neuron.bias += (mean(neuron.biases_adjust) * learning_speed)
+          neuron.bias -= (mean(neuron.biases_adjust) * learning_speed)
         except:
           print(layer.index)
           quit()
         for weight in range(len(neuron.weights)):
-          neuron.weights[weight] += (mean(neuron.weights_adjust[weight]) * learning_speed)
+          neuron.weights[weight] -= (mean(neuron.weights_adjust[weight]) * learning_speed)
 
     for layer in self.layers:
       for neuron in layer.neurons:
